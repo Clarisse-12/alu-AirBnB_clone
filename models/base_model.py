@@ -1,51 +1,44 @@
 #!/usr/bin/python3
-
+"""This module defines a base class for all models in our hbnb clone"""
 import uuid
 from datetime import datetime
-import models
+
 
 class BaseModel:
-    """the constructor of the class '__init__'"""
-    def __init__(self, *args, **kwargvs):
-        
-        if kwargvs:
-            for k, v in kwargvs.items():
-                if k == '__class__':
-                    continue
-
-                elif k in ["created_at", "updated_at"]:
-                    setattr(self, k, datetime.fromisoformat(v))
-                else:
-                    setattr(self, k, v)
-        else:
+    """A base class for all hbnb models"""
+    def __init__(self, *args, **kwargs):
+        """Instatntiates a new model"""
+        if not kwargs:
+            from models import storage
             self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
             self.updated_at = datetime.now()
-            models.storage.new(self)
-                
+            storage.new(self)
+        else:
+            kwargs['updated_at'] = datetime.strptime(kwargs['updated_at'],
+                                                     '%Y-%m-%dT%H:%M:%S.%f')
+            kwargs['created_at'] = datetime.strptime(kwargs['created_at'],
+                                                     '%Y-%m-%dT%H:%M:%S.%f')
+            del kwargs['__class__']
+            self.__dict__.update(kwargs)
 
     def __str__(self):
-        """it will return the string represation of object"""
-
-        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
+        """Returns a string representation of the instance"""
+        cls = (str(type(self)).split('.')[-1]).split('\'')[0]
+        return '[{}] ({}) {}'.format(cls, self.id, self.__dict__)
 
     def save(self):
-        """this method will save the last time object was modified"""
-
+        """Updates updated_at with current time when instance is changed"""
+        from models import storage
         self.updated_at = datetime.now()
-        models.storage.save()
+        storage.save()
 
     def to_dict(self):
-        """the method to returm dictionary of the attributes of any object"""
-        obj_dict = self.__dict__.copy()
-
-        obj_dict['__class__'] = self.__class__.__name__
-        obj_dict['created_at'] = self.created_at.isoformat()
-        obj_dict['updated_at'] = self.updated_at.isoformat()
-        
-        return obj_dict
-
-if __name__ == '__main__':
-
-    c = BaseModel(city = "aziza", id = "2")
-    c.save()
+        """Convert instance into dict format"""
+        dictionary = {}
+        dictionary.update(self.__dict__)
+        dictionary.update({'__class__':
+                          (str(type(self)).split('.')[-1]).split('\'')[0]})
+        dictionary['created_at'] = self.created_at.isoformat()
+        dictionary['updated_at'] = self.updated_at.isoformat()
+        return dictionary
