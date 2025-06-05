@@ -30,6 +30,18 @@ class HBNBCommand(cmd.Cmd):
              'latitude': float, 'longitude': float
             }
 
+    def default(self, line):
+        """
+        handle white space only
+        
+        """
+        if line.strip() == "":
+            return # Do nothing for lines with only whitespace
+        return super().default(line)
+
+    
+    
+    
     def preloop(self):
         """Prints if isatty is false"""
         if not sys.__stdin__.isatty():
